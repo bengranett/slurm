@@ -73,6 +73,10 @@ if args.positional:
 
 arg_dict = dict(args.__dict__)
 
+opt_keys = ["array", "account", "begin", "cpus_per_task",
+            "depedency", "workdir", "error", "job_name", "mail_type",
+            "mail_user", "ntasks", "nodes", "output", "partition",
+            "quiet", "time", "wrap", "constraint", "mem"]
 
 # Process resources
 if "resources" in job_properties:
@@ -82,17 +86,13 @@ if "resources" in job_properties:
             arg_dict["time"] = resources["runtime"]
         elif "walltime" in resources:
             arg_dict["time"] = resources["walltime"]
-    if "mem" in resources and arg_dict["mem"] is None:
-        arg_dict["mem"] = resources["mem"]
+    for key in opt_keys:
+        if key in resources and arg_dict[key] is None:
+            arg_dict[key] = resources[key]
 
 # Threads
-if "threads" in job_properties:
+if "threads" in job_properties and arg_dict["ntasks"] is None:
     arg_dict["ntasks"] = job_properties["threads"]
-
-opt_keys = ["array", "account", "begin", "cpus_per_task",
-            "depedency", "workdir", "error", "job_name", "mail_type",
-            "mail_user", "ntasks", "nodes", "output", "partition",
-            "quiet", "time", "wrap", "constraint", "mem"]
 
 # Set default partition
 if arg_dict["partition"] is None:
@@ -114,6 +114,7 @@ for k, v in arg_dict.items():
     if k not in opt_keys:
         continue
     if v is not None:
+        k = k.replace("_", "-")
         opts += " --{} \"{}\" ".format(k, v)
 
 if arg_dict["wrap"] is not None:
